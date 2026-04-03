@@ -32,8 +32,8 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 
 # ── CONFIG — edit these two lines ────────────────────────────
-GEMINI_API_KEY   = "AIzaSyC9j1W-7u3VG1i3cU2qWC6jgT3aOAvF64g"
-SPREADSHEET_ID   = "1344SzsRrl6jBYey6EHIiGYUiD-JC-okLocsuUdgEeUs"
+GEMINI_API_KEY   = "YOUR_GEMINI_API_KEY_HERE"
+SPREADSHEET_ID   = "YOUR_GOOGLE_SHEET_ID_HERE"
 
 # ── SETTINGS (leave as-is unless you want to change) ─────────
 SHEET_NAME       = "Reels"

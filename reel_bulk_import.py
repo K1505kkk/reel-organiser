@@ -21,7 +21,7 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 
 # ── CONFIG — edit these ──────────────────────────────────────
-SPREADSHEET_ID   = "1344SzsRrl6jBYey6EHIiGYUiD-JC-okLocsuUdgEeUs"
+SPREADSHEET_ID   = "YOUR_GOOGLE_SHEET_ID_HERE"
 JSON_FILE        = "message_1.json"   # put this in same folder as script
 SHEET_NAME       = "Reels"
 CREDENTIALS_FILE = "credentials.json"
