@@ -1,0 +1,4 @@
+credentials.json 
+message_1.json 
+__pycache__/ 
+*.pyc 
