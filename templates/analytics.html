@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ReelVault — Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0a0a0a; --surface: #111; --border: #222;
+  --accent: #ff5c3a; --accent2: #ffb23a; --text: #efefef; --muted: #555;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
+
+.header {
+  border-bottom: 1px solid var(--border);
+  padding: 24px 40px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.logo { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
+.logo span { color: var(--accent); }
+.nav a {
+  color: var(--muted); text-decoration: none; font-size: 13px;
+  margin-left: 24px; transition: color 0.15s;
+}
+.nav a:hover { color: var(--text); }
+
+.stats {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 16px; padding: 40px 40px 0;
+}
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px;
+}
+.stat-card .number {
+  font-family: 'Syne', sans-serif; font-size: 42px;
+  font-weight: 800; color: var(--accent); letter-spacing: -2px;
+}
+.stat-card .label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+.charts { padding: 32px 40px 60px; display: flex; flex-direction: column; gap: 24px; }
+.chart-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px;
+}
+.chart-card img { width: 100%; border-radius: 8px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Reel<span>Vault</span> — Analytics</div>
+  <div class="nav">
+    <a href="http://localhost:5000">← Search</a>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat-card">
+    <div class="number">{{ total }}</div>
+    <div class="label">Total Reels Saved</div>
+  </div>
+  <div class="stat-card">
+    <div class="number">{{ unwatched }}</div>
+    <div class="label">Unwatched</div>
+  </div>
+  <div class="stat-card">
+    <div class="number">{{ top_label }}</div>
+    <div class="label">Top Category</div>
+  </div>
+</div>
+
+<div class="charts">
+  <div class="chart-card">
+    <img src="data:image/png;base64,{{ img_labels }}" alt="Reels by Label"/>
+  </div>
+  {% if img_timeline %}
+  <div class="chart-card">
+    <img src="data:image/png;base64,{{ img_timeline }}" alt="Timeline"/>
+  </div>
+  {% endif %}
+  <div class="chart-card">
+    <img src="data:image/png;base64,{{ img_status }}" alt="Status"/>
+  </div>
+</div>
+
+</body>
+</html>

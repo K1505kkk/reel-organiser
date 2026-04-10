@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ReelVault — Search</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne+Mono&family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0a0a0a;
+  --surface: #111;
+  --border: #222;
+  --accent: #ff5c3a;
+  --accent2: #ffb23a;
+  --text: #efefef;
+  --muted: #555;
+  --tag-bg: #1a1a1a;
+  --success: #3affa0;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+.header {
+  border-bottom: 1px solid var(--border);
+  padding: 24px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  background: rgba(10,10,10,0.95);
+  backdrop-filter: blur(10px);
+  z-index: 100;
+}
+
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.logo span { color: var(--accent); }
+
+.stats-bar {
+  font-family: 'Syne Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  gap: 24px;
+}
+
+.stats-bar strong { color: var(--accent2); }
+
+/* ── SEARCH AREA ── */
+.search-area {
+  padding: 48px 40px 32px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.search-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -2px;
+  margin-bottom: 32px;
+}
+
+.search-title span { color: var(--accent); }
+
+.search-box {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.search-input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'Syne Mono', monospace;
+  font-size: 16px;
+  padding: 16px 20px;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.search-input:focus { border-color: var(--accent); }
+.search-input::placeholder { color: var(--muted); }
+
+.search-btn {
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 16px 28px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.search-btn:hover { opacity: 0.85; }
+
+/* ── LABEL FILTERS ── */
+.filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.filter-btn {
+  background: var(--tag-bg);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  padding: 6px 16px;
+  transition: all 0.15s;
+}
+
+.filter-btn:hover { border-color: var(--accent); color: var(--text); }
+.filter-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+/* ── RESULTS ── */
+.results-area {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 40px 60px;
+}
+
+.results-meta {
+  font-size: 13px;
+  color: var(--muted);
+  font-family: 'Syne Mono', monospace;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.results-meta strong { color: var(--accent2); }
+
+/* ── REEL CARD ── */
+.reel-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: start;
+  transition: border-color 0.15s, background 0.15s;
+  animation: fadeIn 0.2s ease forwards;
+}
+
+.reel-card:hover {
+  border-color: #333;
+  background: var(--surface);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.reel-notes {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.reel-notes.expanded {
+  -webkit-line-clamp: unset;
+}
+
+.reel-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  background: var(--tag-bg);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 11px;
+  font-family: 'Syne Mono', monospace;
+  padding: 3px 10px;
+  color: var(--muted);
+}
+
+.tag.label { color: var(--accent2); border-color: #2a2000; background: #1a1500; }
+.tag.status-watched { color: var(--success); border-color: #003320; background: #001a10; }
+.tag.status-unwatched { color: #aaa; }
+.tag.status-saved { color: #7ab8ff; border-color: #001a3a; background: #001020; }
+
+.reel-date {
+  font-family: 'Syne Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.reel-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.open-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: 'Syne Mono', monospace;
+  padding: 6px 12px;
+  text-decoration: none;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.open-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.expand-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11px;
+  font-family: 'Syne Mono', monospace;
+  padding: 0;
+}
+
+.expand-btn:hover { color: var(--text); }
+
+/* ── PAGINATION ── */
+.pagination {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+.page-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: 'Syne Mono', monospace;
+  font-size: 13px;
+  padding: 8px 14px;
+  transition: all 0.15s;
+}
+
+.page-btn:hover, .page-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── EMPTY / LOADING ── */
+.empty {
+  text-align: center;
+  padding: 60px 0;
+  color: var(--muted);
+  font-family: 'Syne Mono', monospace;
+  font-size: 14px;
+}
+
+.empty .big { font-size: 40px; margin-bottom: 12px; }
+
+.loader {
+  display: none;
+  text-align: center;
+  padding: 40px;
+  color: var(--muted);
+  font-family: 'Syne Mono', monospace;
+  font-size: 13px;
+}
+
+.loader.active { display: block; }
+
+/* ── HIGHLIGHT MATCH ── */
+mark {
+  background: rgba(255, 92, 58, 0.2);
+  color: var(--accent);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Reel<span>Vault</span></div>
+  <div class="stats-bar" id="statsBar">loading...</div>
+</div>
+
+<div class="search-area">
+  <div class="search-title">Find any reel<br>you ever <span>saved.</span></div>
+
+  <div class="search-box">
+    <input type="text" class="search-input" id="searchInput"
+           placeholder="search topic, keyword, creator..." autocomplete="off"/>
+    <button class="search-btn" onclick="doSearch(1)">Search</button>
+  </div>
+
+  <div class="filters" id="filters">
+    <button class="filter-btn active" onclick="setLabel('All', this)">All</button>
+    <button class="filter-btn" onclick="setLabel('Finance', this)">Finance</button>
+    <button class="filter-btn" onclick="setLabel('Tech', this)">Tech</button>
+    <button class="filter-btn" onclick="setLabel('Motivation', this)">Motivation</button>
+    <button class="filter-btn" onclick="setLabel('Business', this)">Business</button>
+    <button class="filter-btn" onclick="setLabel('Health', this)">Health</button>
+    <button class="filter-btn" onclick="setLabel('Entertainment', this)">Entertainment</button>
+    <button class="filter-btn" onclick="setLabel('Learning', this)">Learning</button>
+    <button class="filter-btn" onclick="setLabel('Other', this)">Other</button>
+  </div>
+</div>
+
+<div class="results-area">
+  <div class="loader" id="loader">⏳ searching...</div>
+  <div id="resultsMeta" class="results-meta" style="display:none"></div>
+  <div id="results"></div>
+  <div id="pagination" class="pagination"></div>
+</div>
+
+<script>
+let currentLabel = 'All';
+let currentPage  = 1;
+let currentQuery = '';
+
+// ── LOAD STATS ────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const res  = await fetch('/api/stats');
+    const data = await res.json();
+    const bar  = document.getElementById('statsBar');
+    const top  = Object.entries(data.by_label)
+                       .sort((a,b) => b[1]-a[1])
+                       .slice(0,3)
+                       .map(([l,c]) => `${l}: <strong>${c}</strong>`)
+                       .join(' · ');
+    bar.innerHTML = `<strong>${data.total}</strong> reels · ${top}`;
+  } catch(e) {
+    document.getElementById('statsBar').textContent = 'could not load stats';
+  }
+}
+
+// ── SET LABEL FILTER ─────────────────────────────────────────
+function setLabel(label, btn) {
+  currentLabel = label;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  doSearch(1);
+}
+
+// ── HIGHLIGHT QUERY IN TEXT ───────────────────────────────────
+function highlight(text, query) {
+  if (!query) return text;
+  const words = query.trim().split(/\s+/).filter(Boolean);
+  let result = text;
+  words.forEach(word => {
+    const re = new RegExp(`(${word})`, 'gi');
+    result = result.replace(re, '<mark>$1</mark>');
+  });
+  return result;
+}
+
+// ── STATUS TAG CLASS ─────────────────────────────────────────
+function statusClass(status) {
+  if (!status) return 'status-unwatched';
+  const s = status.toLowerCase();
+  if (s === 'watched') return 'status-watched';
+  if (s === 'saved')   return 'status-saved';
+  return 'status-unwatched';
+}
+
+// ── RENDER RESULTS ────────────────────────────────────────────
+function renderResults(data, query) {
+  const container = document.getElementById('results');
+  const meta      = document.getElementById('resultsMeta');
+  const pagEl     = document.getElementById('pagination');
+
+  if (data.results.length === 0) {
+    container.innerHTML = `
+      <div class="empty">
+        <div class="big">🔍</div>
+        no reels found for "${query || 'this filter'}"
+      </div>`;
+    meta.style.display = 'none';
+    pagEl.innerHTML = '';
+    return;
+  }
+
+  meta.style.display = 'block';
+  meta.innerHTML = `showing <strong>${data.results.length}</strong> of <strong>${data.total}</strong> results`;
+
+  container.innerHTML = data.results.map((r, i) => `
+    <div class="reel-card" style="animation-delay:${i * 0.03}s">
+      <div>
+        <div class="reel-notes" id="notes-${i}">${highlight(r.notes || '(no caption)', query)}</div>
+        <div class="reel-meta">
+          ${r.label ? `<span class="tag label">${r.label}</span>` : ''}
+          <span class="tag ${statusClass(r.status)}">${r.status || 'Unwatched'}</span>
+          <span class="reel-date">${r.date || ''}</span>
+        </div>
+      </div>
+      <div class="reel-actions">
+        <a class="open-btn" href="${r.url}" target="_blank">Open ↗</a>
+        <button class="expand-btn" onclick="toggleExpand('notes-${i}', this)">expand</button>
+      </div>
+    </div>
+  `).join('');
+
+  // Pagination
+  pagEl.innerHTML = '';
+  if (data.pages > 1) {
+    for (let p = 1; p <= data.pages; p++) {
+      const btn = document.createElement('button');
+      btn.className = 'page-btn' + (p === data.page ? ' active' : '');
+      btn.textContent = p;
+      btn.onclick = () => doSearch(p);
+      pagEl.appendChild(btn);
+    }
+  }
+}
+
+// ── TOGGLE EXPAND ────────────────────────────────────────────
+function toggleExpand(id, btn) {
+  const el = document.getElementById(id);
+  el.classList.toggle('expanded');
+  btn.textContent = el.classList.contains('expanded') ? 'collapse' : 'expand';
+}
+
+// ── MAIN SEARCH ───────────────────────────────────────────────
+async function doSearch(page = 1) {
+  currentPage  = page;
+  currentQuery = document.getElementById('searchInput').value;
+
+  const loader = document.getElementById('loader');
+  const results = document.getElementById('results');
+  loader.classList.add('active');
+  results.innerHTML = '';
+  document.getElementById('resultsMeta').style.display = 'none';
+  document.getElementById('pagination').innerHTML = '';
+
+  try {
+    const params = new URLSearchParams({
+      q:     currentQuery,
+      label: currentLabel,
+      page:  currentPage
+    });
+    const res  = await fetch(`/api/search?${params}`);
+    const data = await res.json();
+    loader.classList.remove('active');
+
+    if (data.error) {
+      results.innerHTML = `<div class="empty"><div class="big">⚠️</div>${data.error}</div>`;
+      return;
+    }
+    renderResults(data, currentQuery);
+  } catch(e) {
+    loader.classList.remove('active');
+    results.innerHTML = `<div class="empty"><div class="big">⚠️</div>could not connect to server</div>`;
+  }
+}
+
+// ── ENTER KEY ────────────────────────────────────────────────
+document.getElementById('searchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch(1);
+});
+
+// ── INIT ─────────────────────────────────────────────────────
+loadStats();
+doSearch(1);
+</script>
+</body>
+</html>

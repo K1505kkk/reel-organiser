@@ -1,14 +1,14 @@
 # 🎬 ReelVault — Instagram Reels Organiser Pipeline
 
-A personal data engineering project that collects, organises, and searches Instagram Reels saved via DMs — built entirely with Python, Google Sheets API, and Gemini AI.
+A personal data engineering project that collects, organises, summarises, and searches 568+ Instagram Reels saved via DMs — built with Python, Google Sheets API, Whisper, Ollama, and Flask.
 
 ---
 
 ## 🧩 The Problem
 
-I send useful Instagram Reels to my own DM account constantly — finance tips, tech tools, motivation clips. After a few months, I had **568 saved reels** with zero organisation. No labels, no summaries, no way to find anything.
+I forward useful Instagram Reels to my own DM account constantly — finance tips, tech tools, motivation clips. After a few months I had **568 saved reels** with zero organisation. No labels, no summaries, no way to find anything.
 
-I built ReelVault to solve that.
+I built ReelVault to solve that — end to end.
 
 ---
 
@@ -18,27 +18,29 @@ I built ReelVault to solve that.
 Instagram DM Export (JSON)
         │
         ▼
-reel_bulk_import.py         ← parses 568 reels, auto-labels, bulk loads into Sheet
+reel_bulk_import.py       ← parses 568 reels, auto-labels, bulk loads into Sheet
         │
         ▼
-Google Sheets (ReelsOrganiser)  ← central data store
+Google Sheets (ReelsOrganiser)
   [URL | Short ID | Label | Summary | Date | Status]
         │
-        ├──▶ reel_watcher.py     ← polls sheet every 30s for new URLs
+        ├──▶ reel_watcher.py (V2)     ← polls sheet every 30s for new URLs
         │         │
-        │         ▼
-        │    yt-dlp downloads reel
-        │         │
-        │         ▼
-        │    Gemini 2.0 Flash (video understanding)
-        │         │
-        │         ▼
-        │    summary + label written back to sheet
+        │         ├── yt-dlp downloads reel
+        │         ├── Whisper tiny transcribes audio (local CPU)
+        │         └── Ollama gemma2:2b writes clean summary → sheet
         │
-        └──▶ reel_search.py      ← Flask local search UI
-                  │
-                  ▼
-           http://localhost:5000  ← search 568 reels by keyword/label
+        ├──▶ reel_summariser.py       ← batch reprocessor (RTX 3060, LLaVA + Gemma3)
+        │         │
+        │         ├── SP1: yt-dlp → ffmpeg frames → LLaVA vision description
+        │         ├── SP1c: ffmpeg audio → Whisper transcription
+        │         └── SP2: Gemma3 12B → clean topic-first summary → sheet
+        │
+        ├──▶ reel_search.py           ← Flask search UI (localhost:5000)
+        │         └── keyword + label filter across 568 reels
+        │
+        └──▶ reel_analytics.py        ← Flask analytics dashboard (localhost:5001)
+                  └── label distribution, monthly timeline, status breakdown
 ```
 
 ---
@@ -47,27 +49,34 @@ Google Sheets (ReelsOrganiser)  ← central data store
 
 | File | What it does |
 |------|-------------|
-| `reel_bulk_import.py` | Parses Instagram DM export JSON, extracts all reel URLs, auto-labels from captions, bulk imports into Google Sheet |
-| `reel_logger.py` | Manual pipeline — paste a URL, downloads via yt-dlp, sends to Gemini for summary, logs to sheet |
-| `reel_watcher.py` | Background script that watches the Sheet for new URLs and auto-processes them without any manual input |
-| `reel_search.py` | Flask web server + search UI to search all saved reels by keyword, label, or topic |
+| `reel_bulk_import.py` | Parses Instagram DM export JSON, auto-labels from captions, bulk imports into Sheet |
+| `reel_logger.py` | Manual paste pipeline — URL → download → summary → sheet |
+| `reel_watcher.py` | V2 background watcher — Whisper + Ollama gemma2b for daily use on laptop |
+| `reel_summariser.py` | Batch reprocessor — full E pipeline (LLaVA + Whisper + Gemma3) for friend's RTX 3060 |
+| `reel_search.py` | Flask search server — keyword + label filter UI |
+| `reel_analytics.py` | Flask analytics dashboard — charts from sheet data |
+| `static/index.html` | Search frontend |
+| `templates/analytics.html` | Analytics frontend |
 
 ---
 
 ## ⚙️ Tech Stack
 
-- **Python 3.12+** — core scripting
-- **Google Sheets API** — data store and interface
-- **yt-dlp** — Instagram Reel video downloader
-- **Gemini 2.0 Flash API** — multimodal video understanding for auto-summary
-- **Flask** — local search web server
+- **Python 3.12+**
+- **Google Sheets API** — central data store
+- **yt-dlp** — Instagram Reel downloader + metadata extraction
+- **Whisper (tiny/base)** — local audio transcription (OpenAI, runs on CPU)
+- **Ollama + gemma2:2b** — local LLM for daily summaries (laptop)
+- **Ollama + LLaVA + Gemma3:12b** — full vision pipeline (RTX 3060)
+- **Flask** — local search + analytics web servers
+- **Matplotlib + Pandas** — analytics charts
 - **OAuth2** — Google authentication
 
 ---
 
 ## 🚀 Setup
 
-### 1. Clone the repo
+### 1. Clone
 ```bash
 git clone https://github.com/K1505kkk/reel-organiser.git
 cd reel-organiser
@@ -75,49 +84,51 @@ cd reel-organiser
 
 ### 2. Install dependencies
 ```bash
-pip install yt-dlp google-genai google-auth-oauthlib google-api-python-client flask
+pip install yt-dlp openai-whisper google-auth-oauthlib google-api-python-client flask pandas matplotlib
+ollama pull gemma2:2b
+winget install ffmpeg
 ```
 
-### 3. Set up Google Sheets API
-- Go to [console.cloud.google.com](https://console.cloud.google.com)
-- Enable **Google Sheets API** and **Google Drive API**
-- Create OAuth 2.0 credentials → Desktop App
-- Download as `credentials.json` and place in project root
+### 3. Google Sheets API
+- console.cloud.google.com → enable Sheets + Drive API
+- Create OAuth 2.0 credentials → Desktop App → download as `credentials.json`
 
-### 4. Get Gemini API key
-- Go to [aistudio.google.com](https://aistudio.google.com)
-- Create an API key (free tier available)
-
-### 5. Configure each script
-Open each `.py` file and fill in:
+### 4. Configure
+In each script, set:
 ```python
-GEMINI_API_KEY = "your_key_here"
-SPREADSHEET_ID = "your_sheet_id_here"  # from the Sheet URL
+SPREADSHEET_ID = "your_sheet_id_here"
 ```
 
 ---
 
 ## 📦 Usage
 
-### Bulk import from Instagram export
+### Bulk import backlog
 ```bash
-# Place your message_1.json from Instagram data export in the folder
 python reel_bulk_import.py
-# → Imports all reels with auto-labels and captions
 ```
 
-### Run background watcher (for new reels)
+### Watch for new reels (V2 — daily use)
 ```bash
 python reel_watcher.py
-# → Paste any reel URL into column A of the Sheet
-# → Summary + label appear automatically within 30 seconds
+# Paste any reel URL into column A → summary appears in ~30s
 ```
 
-### Search your reels
+### Batch reprocess with full pipeline (RTX 3060)
+```bash
+python reel_summariser.py
+```
+
+### Search UI
 ```bash
 python reel_search.py
-# → Open http://localhost:5000
-# → Search by keyword, filter by label
+# Open http://localhost:5000
+```
+
+### Analytics dashboard
+```bash
+python reel_analytics.py
+# Open http://localhost:5001
 ```
 
 ---
@@ -129,32 +140,27 @@ python reel_search.py
 | A | Reel URL | Full Instagram URL |
 | B | Short ID | Extracted reel identifier |
 | C | Label | Auto-assigned category |
-| D | Summary/Notes | Caption or Gemini-generated summary |
+| D | Summary | Clean topic-first summary (max 20 words) |
 | E | Date Added | When the reel was saved |
 | F | Status | Unwatched / Watched / Saved |
 
 ---
 
-## 🔑 Security
+## 🗺️ Roadmap
 
-- `credentials.json` and `token.json` are in `.gitignore` — never committed
-- API keys are not hardcoded — fill them in locally before running
-- Instagram export JSON (`message_1.json`) is excluded from version control
+- [ ] Semantic search — ChromaDB embeddings
+- [ ] SP3 embeddings pipeline
+- [ ] Deploy Flask apps to free hosting (Render/Railway)
+- [ ] Mobile share sheet integration
 
 ---
 
-## 🗺️ Roadmap
-
-- [ ] Semantic search using embeddings + vector database
-- [ ] Analytics dashboard (reels by label, activity over time)
-- [ ] Ollama integration for fully local AI summaries
-- [ ] `.env` file support for cleaner config
+## 🔑 Security
+- `credentials.json`, `token.json`, `.env` — never committed (in `.gitignore`)
+- API keys stored in `.env` only
 
 ---
 
 ## 👤 Author
-
-**Krushna Junnarkar** — SE ENTC, Savitribai Phule Pune University  
-Building systems at the intersection of data and automation.
-
+**Krushna Junnarkar** — Data Analytics | Automation | Local AI  
 [GitHub](https://github.com/K1505kkk)
