@@ -25,7 +25,7 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 
 # ── CONFIG ───────────────────────────────────────────────────
-SPREADSHEET_ID   = "1344SzsRrl6jBYey6EHIiGYUiD-JC-okLocsuUdgEeUs"
+SPREADSHEET_ID   = "https://docs.google.com/spreadsheets/d/THIS_IS_YOUR_ID/edit?gid=446667742#gid=446667742"
 SHEET_NAME       = "Reels"
 CREDENTIALS_FILE = "credentials.json"
 TOKEN_FILE       = "token.json"
